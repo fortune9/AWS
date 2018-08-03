@@ -1,0 +1,45 @@
+#!/bin/bash
+
+function usage ()
+{
+	echo "
+	Usage: $0 <instance-id> [<format: text, table, or json>]
+
+	This program outputs the volumes associated to an instance.
+	";
+	exit 1;
+}
+
+if [[ $# -lt 1 ]]; then
+	usage;
+fi
+
+while getopts ":ui" opt; do
+	case $opt in
+		u)
+			type='Public'
+			;;
+		i)
+			type='Private'
+			;;
+		\?)
+			usage
+			;;
+	esac
+done
+
+shift $((OPTIND -1))
+
+
+instId=$1
+fmt=${2:-table}
+
+elements='Dev:DeviceName,VolID:Ebs.VolumeId,DelOnTerm:Ebs.DeleteOnTermination'
+#elements='DeviceName,Ebs.[VolumeId,DeleteOnTermination]'
+
+aws ec2 describe-instances --instance-ids $instId --output $fmt \
+--query \
+"Reservations[*].Instances[*].BlockDeviceMappings[*].{$elements}"
+#"Reservations[*].Instances[*].BlockDeviceMappings[*].[$elements]"
+#--query 'Reservations[*].Instances[*].BlockDeviceMappings[*].[PublicIpAddress,PublicDnsName]'
+

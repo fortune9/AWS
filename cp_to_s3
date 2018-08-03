@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# this program is to copy data from EC2 instance to S3
+# bucket
+
+if [[ $# -lt 2 ]]; then
+	echo "
+	Usage: $0 <s3-bucket> <source1> [<source2> ...]
+
+	s3-bucket: destination files or folders in S3 bucket
+
+	source: source files or folder
+
+	This program copy files from local computer/EC2 instance
+	to S3 bucket.
+
+	e.g.: $0 my_bucket file1 dir1/ file2
+
+	"
+
+	exit 1;
+fi
+
+# construct target path
+bucket="s3://$1/"
+shift;
+
+for src in "$@";
+do
+	# echo copying $src
+	echo " --- $f "
+	if [[ -d "$src" ]]; then
+		aws s3 sync $src $bucket
+	else
+		aws s3 cp $src $bucket
+	fi
+
+done
+

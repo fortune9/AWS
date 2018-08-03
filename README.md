@@ -1,17 +1,30 @@
-# A package to launch and manage a computing cluster on AWS EC2 systems
+## Purpose
 
-The package contains three major tools: ec2c-spawn, ec2c-submit, and
-ec2c-info.
+Provide all kinds of functions used on the AWS EC2/S3 systems.
 
-1. ec2c-spawn
-   launch new EC2 instances to the cluster
+Here is a list of programs I wrote:
 
-2. ec2c-submit
-   submit jobs to the cluster
+1. my\_insts: get the instances associated with current AWS user.
 
-3. ec2c-info
-   get the information of a cluster
+2. inst\_ip: get the IP addresses of current EC2 instance.
 
+3. inst\_vol: get the associated volumes of current EC2 instance.
+
+4. launch\_ec2.pl: launch an EC2 instance by providing parameters.
+
+5. cp\_to\_s3: copy files/folders to a S3 bucket folder.
+
+Run each program without any parameter to get usage information.
+
+## Dependencies
+
+For these programs to work, please install the following software:
+
+1. AWS command line interface, downloadable
+   [here](https://aws.amazon.com/cli/)
+
+2. Bash, normally included in \*nix systems. In Windows, one can
+consider git bash.
 
 ## Author
 
@@ -19,4 +32,4 @@ Zhenguo Zhang, zhangz.sci@gmail.com
 
 ## Last modified
 
-Wed May 17 10:03:13 EDT 2017
+Fri Aug  3 18:19:15 EDT 2018

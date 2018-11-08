@@ -1,0 +1,60 @@
+#!/bin/sh
+
+keyFile=~/.aws/credentials;
+
+if [[ $# -lt 2 ]]; then
+	echo "
+	Usage: $0 <name-of-s3-bucket> <mounting-folder> [other options to
+	'riofs']
+
+	Example: $0 epiquest s3_bucket/
+
+	This is a wrapper of the program riofs, particularly hiding the
+	reading of aws_access_key_id and aws_secret_access_key.
+
+	Note that the <name-of-s3-bucket> must be the top folder name of a
+	s3 bucket (e.g., 'epiquest'), using sub-folders
+	(epiquest/epiquest_in409) will fail the program.
+	"
+
+	exit 1;
+fi
+
+s3bucket=$1;
+mnt=$2
+shift 2;
+
+#echo $s3bucket
+#echo $mnt
+#echo Remaining: $@
+#exit 1;
+
+# declare access key variables
+# the option -x make it available in sub-process shell commands
+# spaces arround values are removed
+declare -x AWS_ACCESS_KEY_ID=$(cat $keyFile | gawk \
+'BEGIN{OFS="\t"}{line=gensub(/ *= */, "\t", 1); print line}' | gawk \
+'BEGIN{FS="\t"}$1=="aws_access_key_id" {val=gensub(" ","","g",$2); \
+print val}')
+
+declare -x AWS_SECRET_ACCESS_KEY=$(cat $keyFile | gawk \
+'BEGIN{OFS="\t"}{line=gensub(/ *= */, "\t", 1); print line}' | gawk \
+'BEGIN{FS="\t"}$1=="aws_secret_access_key" {val=gensub(" ","","g",$2); \
+print val}')
+
+#echo $AWS_ACCESS_KEY_ID 
+#echo $AWS_SECRET_ACCESS_KEY 
+
+if [[ -z $AWS_ACCESS_KEY_ID ]]; then
+	echo "Can't find value for aws_access_key_id in $keyFile"
+	exit 1;
+fi
+
+if [[ -z $AWS_SECRET_ACCESS_KEY ]]; then
+	echo "Can't find value for aws_secret_access_key in $keyFile"
+	exit 1;
+fi
+
+echo "Mounting $s3bucket onto $mnt ..."
+riofs $s3bucket $mnt
+

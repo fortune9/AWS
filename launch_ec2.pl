@@ -5,7 +5,7 @@
 use strict;
 use Getopt::Long;
 
-my $defaultAMI='';
+my $defaultAMI='ami-bc86dfaa';
 my $amiId;
 my $count;
 my $type;
@@ -31,29 +31,20 @@ GetOptions(
 
 &usage() unless($type);
 
-#############################
 # set default values
 $amiId ||= $defaultAMI;
 $count   = 1 unless(defined $count and $count > 0);
 #$type='t2.micro'
-$key  ||=''; # e.g.: zzg
-$secGrp||=''; # e.g.: sg-05c7a73c
-$subnet ||= ''; # this is a public subnet, eg. subnet-1234567a
+$key  ||='zzhang';
+$secGrp||='sg-05c7a67a';
+#$vpc='vpc-168e9973|zymo'
+#$subnet='subnet-3309706a' # this is a private subnet
+$subnet ||= 'subnet-3209706b'; # this is a public subnet
+#$devMap ||= 'file://ec2_devices.json';
 $devMap ||= ' ';
 $withPubIp = 1 unless(defined $withPubIp);
 $withPubIp = $withPubIp? '--associate-public-ip-address' :
 '--associate-public-ip-address';
-#############################
-
-if($amiId eq '' or
-	$key eq '' or
-	$secGrp eq '' or
-	$subnet eq '')
-{
-	warn "You have not setup default parameters ",
-	"please provide values for all the options: ami, key, sec-grp, and subnet\n";
-	exit 2;
-}
 
 if($devMap)
 {
@@ -112,11 +103,11 @@ sub usage
 	--type=instance-type, the type of instances, such as 't2.micro'
 
 	--key=key-name,   the key name used to login the instances
-	                  Default: ''.
+	                  Default: zzhang.
 	--sec-grp=sec-group, the security groups associated with instances
-	                  Default:''.
+	                  Default:sg-05c7a67a.
 	--subnet=subnet-id, the subnet-id used for the instances
-	                  Default: ''.
+	                  Default: subnet-3209706b
 	--public-ip,      switch option. if provided, a public IP is assigned
 	                  Default: true
 	--dev-map=device-mapping, block device mapping for the instance,

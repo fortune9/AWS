@@ -14,6 +14,11 @@ Here is a list of programs I wrote:
 
 5. cp\_to\_s3: copy files/folders to a S3 bucket folder.
 
+6. create\_ec2\_tags.pl: add/override tags for instances, AMIs, etc.
+
+7. launch\_ec2.bastion.pl: launch EC2 instances accessible with
+   bastion server.
+
 Run each program without any parameter to get usage information.
 
 ## Dependencies
@@ -33,3 +38,4 @@ Zhenguo Zhang, zhangz.sci@gmail.com
 ## Last modified
 
 Fri Aug  3 18:19:15 EDT 2018
+Thu Jan 17 17:17:56 PST 2019

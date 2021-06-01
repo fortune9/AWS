@@ -74,10 +74,13 @@ conda create -n py27 python=2.7
 
 ## update configuration files
 cd
-for i in .dircolors .Rprofile .vimrc;
-do
-        aws s3 cp s3://zymo-filesystem/home/zzhang/setup/Linux/config/$i .
-done
+git clone https://github.com/fortune9/config.git
+cd config/dot-files && \
+    cp -a .dircolors .Rprofile .vimrc .gitconfig ~/ && cd
+#for i in .dircolors .Rprofile .vimrc;
+#do
+#        aws s3 cp s3://zymo-filesystem/home/zzhang/setup/Linux/config/$i .
+#done
 #ln .dir_colors .dircolors  # ubuntu use the latter name
 
 ## download UCSC tools

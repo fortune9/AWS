@@ -25,12 +25,13 @@ git config --global credential.https://github.com.username fortune9
 sudo apt-get update
 sudo apt upgrade -y
 sudo apt install -y libxt-dev libxrender1 unzip libfontconfig1-dev \
-        dos2unix libcurl4-openssl-dev libssl-dev
+        dos2unix libcurl4-openssl-dev libssl-dev git parallel vim
 
-## install R, following https://cloud.r-project.org/bin/linux/ubuntu/
+## install latest R, following https://cloud.r-project.org/bin/linux/ubuntu/
 ## to install multiple versions of R, see https://docs.rstudio.com/resources/install-r/
 sudo apt install -y --no-install-recommends software-properties-common dirmngr
-sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+### sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | sudo tee -a /etc/apt/trusted.gpg.d/cran_ubuntu_key.asc
 sudo add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -cs)-cran40/"
 sudo apt install -y --no-install-recommends r-base r-base-dev
 # sudo add-apt-repository ppa:c2d4u.team/c2d4u4.0+ # add the repository to allow installing CRAN packages using apt install r-cran-package
@@ -82,6 +83,14 @@ cd config/dot-files && \
 #        aws s3 cp s3://zymo-filesystem/home/zzhang/setup/Linux/config/$i .
 #done
 #ln .dir_colors .dircolors  # ubuntu use the latter name
+
+## Add vim plugins
+curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
+    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+### Add code like below to add more vim plugins
+### Plug 'jalvesaq/Nvim-R', {'branch': 'stable'}
+### then reopen vim, and run :PlugInstall to install plugins.
+### See https://github.com/junegunn/vim-plug for more ideas
 
 ## download UCSC tools
 mkdir -p $HOME/work/bin/

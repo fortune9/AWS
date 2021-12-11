@@ -1,0 +1,121 @@
+#!/bin/bash
+
+set -e
+
+function usage() {
+    cat <<EOF
+Usage: $0 [options] <s3-path1> [<s3-path2> ...]
+
+This program submits requests to restore files stored
+in glacier mode.
+
+The input <s3-path*> can be a file object or a folder,
+in latter case, all the files in the folder will be
+restored.
+
+Alternatively, the <s3-path*> can also be a local file
+(doesn't start with 's3://'), and this file can contain
+all the aws S3 files/folders to restore.
+
+Options (default values are in []):
+
+--days <int>: how many days for the restored files are
+    available, after which they are deleted by AWS [10].
+
+--mode <str>: the mode to restore the files. Choice from
+    Expedited, Standard, and Bulk [Bulk].
+
+Example use:
+
+$0 --days 15 --mode Standard s3://path/to/example
+
+EOF
+
+}
+
+function restore_file {
+    local f=$1
+    local bucket
+    local filepath
+    if [[ $f =~ /$ ]]; then
+        echo "'$f' is a folder, ignored" >&2
+        return ""
+    fi
+    #echo "Received: $f"
+    regex="^s3://([^/]+)/(.+)$"
+    if [[ $f =~ $regex ]]; then
+        bucket="${BASH_REMATCH[1]}"
+        filepath="${BASH_REMATCH[2]}"
+    else
+        echo "Unknown s3 file path '$f'" >&2
+        exit 3
+    fi
+    echo "[Restoring] '$f'"
+    #echo "$bucket"
+    #echo "$filepath"
+    aws s3api restore-object --bucket $bucket \
+        --key "$filepath" --restore-request \
+        Days=$nDays,GlacierJobParameters={"Tier"="$mode"} \
+        && echo "Request submitted successfully"
+        # json format not work here, need double quotes for
+        # properties. "{'Days':$nDays,'GlacierJobParameters':{'Tier':'$mode'}}" \
+}
+
+if [[ $# -lt 1 ]]; then
+    usage;
+    exit 1;
+fi
+
+nDays=10
+mode='Bulk'
+posArgs=()
+
+while [[ $# -gt 0 ]];
+do
+    k=$1; shift
+    case $k in
+        --days)
+            nDays=$1;
+            shift;
+            ;;
+        --mode)
+            mode=$1;
+            shift;
+            ;;
+        *)
+            posArgs+=($k)
+    esac
+done
+
+if [[ ${#posArgs[@]} -lt 1 ]]; then
+    echo "No input paths"
+    usage
+    exit 2
+fi
+
+# get all the s3 paths
+counter=0
+for p in ${posArgs[@]}
+do
+    if [[ $p =~ s3:// ]]; then
+        files=$(aws s3 ls $p --recursive | gawk '{print $4}')
+        bucket=$(echo $p | sed -e 's!^\(s3://[^/]\+\).*!\1!')
+        for s3p in ${files[@]}
+        do
+            restore_file "$bucket/$s3p"
+            let counter=counter+1
+        done
+    else
+        echo "Local file '$p' is found: each line should be an s3 file"
+        for s3p in `cat $p`;
+        do
+            restore_file "$s3p"
+            let counter=counter+1
+        done
+    fi
+done
+
+echo "$counter files were submitted to restore from glacier [days: $nDays; mode: $mode]"
+
+exit 0;
+

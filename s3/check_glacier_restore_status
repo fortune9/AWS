@@ -1,0 +1,83 @@
+#!/bin/bash
+
+set -e
+
+function usage() {
+    cat <<EOF
+Usage: $0 <s3-path1> [<s3-path2> ...]
+
+This program checks the status of the requests
+to restore files in glacier mode.
+
+The input <s3-path*> can be a file object or a folder,
+in latter case, all the files in the folder will be
+restored.
+
+Alternatively, the <s3-path*> can also be a local file
+(doesn't start with 's3://'), and this file can contain
+all the aws S3 files/folders to restore.
+
+Example use:
+
+$0 s3://path/to/example
+
+EOF
+
+}
+
+function check_status {
+    local f=$1
+    local bucket
+    local filepath
+    if [[ $f =~ /$ ]]; then
+        echo "'$f' is a folder, ignored" >&2
+        return ""
+    fi
+    #echo "Received: $f"
+    regex="^s3://([^/]+)/(.+)$"
+    if [[ $f =~ $regex ]]; then
+        bucket="${BASH_REMATCH[1]}"
+        filepath="${BASH_REMATCH[2]}"
+    else
+        echo "Unknown s3 file path '$f'" >&2
+        exit 3
+    fi
+    echo "[Checking] '$f'"
+    #echo "$bucket"
+    #echo "$filepath"
+    aws s3api head-object --bucket $bucket \
+        --key "$filepath" \
+        && echo "Status checking successful"
+}
+
+if [[ $# -lt 1 ]]; then
+    usage;
+    exit 1;
+fi
+
+# get all the s3 paths
+counter=0
+for p in "$@"
+do
+    if [[ $p =~ s3:// ]]; then
+        files=$(aws s3 ls $p --recursive | gawk '{print $4}')
+        bucket=$(echo $p | sed -e 's!^\(s3://[^/]\+\).*!\1!')
+        for s3p in ${files[@]}
+        do
+            check_status "$bucket/$s3p"
+            let counter=counter+1
+        done
+    else
+        echo "Local file '$p' is found: each line should be an s3 file"
+        for s3p in `cat $p`;
+        do
+            check_status "$s3p"
+            let counter=counter+1
+        done
+    fi
+done
+
+echo "$counter files were checked"
+
+exit 0;
+

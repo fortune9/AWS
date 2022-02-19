@@ -1,0 +1,79 @@
+#! /bin/bash
+
+function usage() {
+    cat <<EOF
+Usage: $0 [options] [<jobid1> <jobid2> ...]
+
+This program terminates the jobs in aws batch queue.
+
+--queue: <string> aws batch queue name. Required.
+
+--state: <str> the states for jobs to kill. Valid values
+    are SUBMITTED, PENDING, RUNNABLE, STARTING, RUNNING.
+    When providing more than one, they need be quoted,
+    like 'RUNNABLE RUNNING'. This option is required
+    unless job ids are provided. If any job id is provided,
+    this option is ignored.
+EOF
+
+}
+
+if [[ $# -lt 1 ]]; then
+    usage;
+    exit 1;
+fi
+
+queue=""
+# valid states: SUBMITTED PENDING RUNNABLE STARTING RUNNING
+states=""
+jobId=()
+
+while [[ $# -gt 0 ]];
+do
+    k=$1; shift;
+    case $k in
+        --queue)
+            queue=$1;
+            shift;
+            ;;
+        --state)
+            states=$1;
+            shift;
+            ;;
+        *)
+            jobId+=("$k");
+            ;;
+    esac
+done
+
+states=`echo "$states" | tr '[:lower:]' '[:upper:]'`
+
+if [[ ${#jobId[@]} -gt 0 ]]; then
+    echo "Killing provided jobs, ignoring --state"
+elif [[ "$states" =~ ^[[:space:]]*$ ]]; then
+    echo "--state is needed because no jobids are provided"
+    exit 2;
+else
+    # collecting job ids from different states
+    for state in $states
+    do
+        echo Collecting jos from status $state
+        tmpJobs=$(aws batch list-jobs --job-queue $queue --job-status $state --output text --query jobSummaryList[*].[jobId])
+        jobId+=($tmpJobs)
+    done
+fi
+
+echo queue: $queue
+echo states: "$states"
+echo "Number of jobs: ${#jobId[@]}"
+
+for job in ${jobId[@]}
+do
+    echo -ne "Terminating job: $job\n"
+    aws batch terminate-job --reason "Terminating job manually." \
+    --job-id $job && echo "Done" || echo "Failed."
+done
+
+exit 0;
+
+

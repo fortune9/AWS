@@ -1,0 +1,27 @@
+#!/bin/bash
+
+if [[ $# -lt 1 ]]; then
+    echo "Usage: $0 <s3-path> [options passed to 'aws s3 ls']"
+    echo "Example: $0 s3-bucket/subfolder"
+    exit 1;
+fi
+
+s3dir=$1
+shift
+# remove prefix '/'
+s3dir=$(echo $s3dir | sed 's!^/\+!!')
+
+if [[ ! $s3dir =~ ^s3:// ]]; then
+    s3dir="s3://$s3dir"
+fi
+
+# add trailing /
+if [[ ! $s3dir =~ /$ ]]; then
+    s3dir="$s3dir/"
+fi
+
+echo "=== $s3dir ==="
+aws s3 ls $s3dir $@
+printf '=%.0s' {1..30}
+echo ""
+

@@ -39,7 +39,7 @@ function restore_file {
     local filepath
     if [[ $f =~ /$ ]]; then
         echo "'$f' is a folder, ignored" >&2
-        return ""
+        return 0
     fi
     #echo "Received: $f"
     regex="^s3://([^/]+)/(.+)$"

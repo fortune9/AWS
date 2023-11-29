@@ -31,7 +31,7 @@ function check_status {
     local filepath
     if [[ $f =~ /$ ]]; then
         echo "'$f' is a folder, ignored" >&2
-        return ""
+        return 0
     fi
     #echo "Received: $f"
     regex="^s3://([^/]+)/(.+)$"
@@ -46,7 +46,7 @@ function check_status {
     #echo "$bucket"
     #echo "$filepath"
     aws s3api head-object --bucket $bucket \
-        --key "$filepath" \
+        --key "$filepath" --output yaml \
         && echo "Status checking successful"
 }
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
 function usage() {
     cat <<EOF
@@ -53,12 +53,21 @@ function restore_file {
     echo "[Restoring] '$f'"
     #echo "$bucket"
     #echo "$filepath"
+    # first check whether restoring is ongoing, if so, skip it,
+    # otherwise an error may occur
+    ongoing=$(aws s3api head-object --bucket $bucket \
+        --key "$filepath" --output yaml | grep 'ongoing-request=')
+    if [[ "$ongoing" ]]; then
+        echo "Request ongoing for $f"
+        return 0
+    fi
     aws s3api restore-object --bucket $bucket \
         --key "$filepath" --restore-request \
         Days=$nDays,GlacierJobParameters={"Tier"="$mode"} \
         && echo "Request submitted successfully"
         # json format not work here, need double quotes for
         # properties. "{'Days':$nDays,'GlacierJobParameters':{'Tier':'$mode'}}" \
+    return 0
 }
 
 if [[ $# -lt 1 ]]; then
